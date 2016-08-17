@@ -22,17 +22,17 @@ library(ROCR)
 
 ## The location where the training data is to be downloaded from
 ```{r}
-trainUrl <-"pml-training.csv"
+trainUrl <-"http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 ```
 ## The location where the testing data is to be downloaded from
 ```{r}
-testUrl <- "pml-testing.csv"
+testUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
 ```
 
 ## data load and clean up
 ```{r}
-trainingset <- read.csv(trainUrl, na.strings=c("NA","#DIV/0!",""))
-testingset <- read.csv(testUrl, na.strings=c("NA","#DIV/0!",""))
+trainingset <- read.csv(url(trainUrl), na.strings=c("NA","#DIV/0!",""))
+testingset <- read.csv(url(testUrl), na.strings=c("NA","#DIV/0!",""))
 ```
 
 ## Perform exploratory analysis
@@ -46,4 +46,117 @@ str(testingset);
 head(trainingset); 
 head(testingset)
 ```
+## Take a look at the Training data classe variable
+```{r}
+summary(trainingset$classe)
+```
 
+## Delete columns with all missing values
+```{r}
+trainingset<-trainingset[,colSums(is.na(trainingset)) == 0]
+testingset <-testingset[,colSums(is.na(testingset)) == 0]
+```
+
+## Drop the first 7 variables because these are made up of metadata that would cause the model to perform poorly
+```{r}
+trainingset <-trainingset[,-c(1:7)]
+testingset <-testingset[,-c(1:7)]
+```
+## Check NearZeroVariance variables
+```{r}
+nearZeroVar(trainingset, saveMetrics=TRUE)
+nearZeroVar(testingset, saveMetrics=TRUE)
+```
+
+# Partitioning the data for Crossvalidation
+## partition the data so that 75% of the training dataset into training and the remaining 25% to testing
+```{r}
+traintrainset <- createDataPartition(y=trainingset$classe, p=0.75, list=FALSE)
+TrainTrainingSet <- trainingset[traintrainset, ]
+TestTrainingSet <- trainingset[-traintrainset, ]
+dim(TrainTrainingSet); dim(TestTrainingSet)
+```
+## The variable "classe" contains 5 levels: A, B, C, D and E. A plot of the outcome variable will allow us
+## to see the frequency of each levels in the TrainTrainingSet data set and # compare one another
+```{r}
+plot(TrainTrainingSet$classe, col="blue", main="Plot of levels of variable classe within the Train", xlab="classe", ylab="Frequency")
+```
+# CrossValidation 1: Prediction with a Decision Tree
+
+## Model
+```{r}
+model1 <- rpart(classe ~ ., data=TrainTrainingSet, method="class")
+```
+
+## Prediction
+```{r}
+prediction1 <- predict(model1, TestTrainingSet, type = "class")
+```
+## Plot the Decision Tree
+```{r}
+fancyRpartPlot(model1)
+```
+
+## Test results on our TestTrainingSet data set:
+```{r}
+cm <-confusionMatrix(prediction1, TestTrainingSet$classe)
+print(cm)
+```
+## Accurate
+```{r}
+round(cm$overall['Accuracy'] * 100, 2)
+```
+
+## Error
+```{r}
+round(1 - cm$overall['Accuracy'],2)
+```
+
+# CrossValidation 2: Prediction with Random Forest
+
+## Model
+```{r}
+model2 <- randomForest(classe ~. , data=TrainTrainingSet, method="class")
+```
+
+## Prediction
+```{r}
+prediction2 <- predict(model2, TestTrainingSet, type = "class")
+```
+
+## Test results on our TestTrainingSet data set:
+```{r}
+cm <-confusionMatrix(prediction2, TestTrainingSet$classe)
+print(cm)
+```
+
+## Curve ROC
+```{r}
+plot(model2)
+```
+
+# CrossValidation 2: Prediction with Random Forest
+
+## Decision on which Prediction Model to Use:
+
+### Random Forest algorithm performed better than Decision Trees. Accuracy for Random Forest model was 0.995 (95% CI: (0.993, 0.997)) compared to Decision Tree model with 0.739 (95% CI: (0.727, 0.752)). The Random
+### Forests model is choosen. The expected outofsample error is estimated at 0.005, or 0.5%.
+
+# Submission
+### Here is the final outcome based on the Prediction Model 2 (Random Forest) applied against the Testing dataset
+```{r}
+predictfinal <- predict(model2, testingset, type="class")
+predictfinal
+```
+##Function to generate files with predictions to submit for assignment
+
+```{r}
+pml_write_files = function(x){
+n = length(x)
+for(i in 1:n){
+filename = paste0("problem_id_",i,".txt")
+write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+}
+}
+pml_write_files(predictfinal)
+```

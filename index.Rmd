@@ -1,19 +1,33 @@
 ---
-title: "Practical Machine Learning Course Project"
+title: "Practical Machine Learning - Prediction Assignment Writeup"
 author: "David Hinostroza Vintes"
 date: "17 de agosto de 2016"
 output: html_document
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+For this assignment I analyzed the provided data to determine what activity an individual perform. To do this I made use of caret and randomForest, this allowed me to generate correct answers for each of the 20 test data cases provided in this assignment.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
+# Install packages and load the required libraries
 ```{r}
-summary(cars)
+set.seed(1234)
+library(lattice); 
+library(ggplot2); 
+library(caret); 
+library(randomForest); 
+library(rpart); 
+library(rpart.plot);
+library(rattle)
+library(ROCR)
 ```
 
-You can also embed plots, for example:
+## The location where the training data is to be downloaded from
+```{r}
+trainUrl <-"http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+```
+## The location where the testing data is to be downloaded from
+```{r}
+testUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+```
 
 ```{r, echo=FALSE}
 plot(cars)

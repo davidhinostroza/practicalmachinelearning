@@ -22,15 +22,28 @@ library(ROCR)
 
 ## The location where the training data is to be downloaded from
 ```{r}
-trainUrl <-"http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+trainUrl <-"pml-training.csv"
 ```
 ## The location where the testing data is to be downloaded from
 ```{r}
-testUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+testUrl <- "pml-testing.csv"
 ```
 
-```{r, echo=FALSE}
-plot(cars)
+## data load and clean up
+```{r}
+trainingset <- read.csv(trainUrl, na.strings=c("NA","#DIV/0!",""))
+testingset <- read.csv(testUrl, na.strings=c("NA","#DIV/0!",""))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Perform exploratory analysis
+```{r}
+dim(trainingset); 
+dim(testingset); 
+summary(trainingset); 
+summary(testingset); 
+str(trainingset); 
+str(testingset); 
+head(trainingset); 
+head(testingset)
+```
+
